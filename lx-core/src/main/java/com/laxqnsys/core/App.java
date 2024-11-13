@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 public class App {
 
     public static void main(String[] args) {
+        // 测试
         SpringApplication.run(App.class, args);
     }
 }
