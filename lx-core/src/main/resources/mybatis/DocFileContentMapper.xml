@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.laxqnsys.core.doc.dao.mapper.DocFileContentMapper">
+  <!-- 通用查询映射结果 -->
+  <resultMap id="BaseResultMap" type="com.laxqnsys.core.doc.dao.entity.DocFileContent">
+    <id column="id" property="id"/>
+    <result column="content" property="content"/>
+    <result column="version" property="version"/>
+    <result column="creator_id" property="creatorId"/>
+    <result column="create_at" property="createAt"/>
+    <result column="update_at" property="updateAt"/>
+  </resultMap>
+
+  <insert id="copyByFileIdList" parameterType="list">
+    insert into doc_file_content(id,content,creator_id,create_at,update_at)
+    select (
+    case
+    <foreach collection="list" separator="" item="item" open="" close="" index="index">
+      when id = #{item.oldFileId} then #{item.newFileId}
+    </foreach>
+    else 0
+    end
+    ) as id
+    ,content,#{userId} as creator_id,NOW(),NOW() from doc_file_content
+    where id in
+    <foreach collection="list" separator="," item="item" open="(" close=")" index="index">
+      #{item.oldFileId}
+    </foreach>
+  </insert>
+</mapper>

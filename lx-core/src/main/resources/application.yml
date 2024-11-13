@@ -1,0 +1,71 @@
+log.home: /data/logs/lx-doc
+app.version: 1.0.0
+loglevel: info
+app.name: lx-doc
+server:
+  port: 9222
+  servlet:
+    context-path: /
+  tomcat:
+    threads:
+      max: 200 # Maximum amount of worker threads.
+      min-spare: 10 # Minimum amount of worker threads.
+  error:
+    path: /system/error
+
+mybatis-plus:
+  mapper-locations: classpath*:/mybatis/*.xml
+  config-location: classpath:mybatis-config.xml
+
+lx:
+  doc:
+    whiteUrlList: /,/api/login,/api/register,/static/**,/assets/**,/system/error # 白名单url，配置之后将会被登录拦截器拦截
+    fileUploadPath: /usr/attament/ # 配置文件上传的地址
+    indexHtmlWebPath: /assets/index.html # 配置欢迎页
+    staticResources:
+      - pathPatterns: /static/** # 配置静态资源访问的web uri
+        resourceLocations: file:///${lx.doc.fileUploadPath} # 配置静态资源所在物理磁盘的位置，不过静态资源的访问尽量使用 nginx 反向代理
+      - pathPatterns: /assets/**
+        resourceLocations: file:///D:/work/lx-doc/workbench/dist/assets/,file:///D:/work/lx-doc/workbench/dist/
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 100MB
+  application.name: ${app.name}
+  mvc:
+    format:
+      date-time: "yyyy-MM-dd HH:mm:ss"
+    dispatch-trace-request: true
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: NON_NULL
+    #https://www.cnblogs.com/woshimrf/p/LocalDate-serialize-json-springboot.html
+    serialization.WRITE_DATES_AS_TIMESTAMPS: false
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      stat-view-servlet.enabled: false
+      web-stat-filter.enabled: false
+      filters: stat
+      maxActive: 20
+      initialSize: 1
+      maxWait: 60000
+      minIdle: 1
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+      validationQuery: select 'x'
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      poolPreparedStatements: true
+      maxPoolPreparedStatementPerConnectionSize: 20
+      maxOpenPreparedStatements: 20
+      useGlobalDataSourceStat: false
+      connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=1000;druid.stat.logSlowSql=true
+      url: jdbc:mysql://127.0.0.1:3306/database_name?useUnicode=true&characterEncoding=utf8&autoReconnect=true&allowMultiQueries=true
+      username: xxx
+      password: xxx
