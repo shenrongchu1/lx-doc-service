@@ -46,8 +46,15 @@ public class LoginHandlerInterceptor implements HandlerInterceptor {
         String uri = request.getRequestURI();
         boolean match = whiteUrlList.stream().anyMatch(url -> antPathMatcher.match(url, uri));
         if (match) {
+
+            // 使用 CachedBodyHttpServletRequest 包装原始的 HttpServletRequest
+            CachedBodyHttpServletRequest cachedRequest = new CachedBodyHttpServletRequest(request);
+
             // 判断设备类型
-            judgeEquipmentType(request, handler, uri);
+            judgeEquipmentType(cachedRequest, handler, uri);
+
+            // 将包装后的请求传递给后续的处理器
+            request = cachedRequest;
             return true;
         }
         String token = WebUtil.getCookie(request, CommonCons.TOKEN_KEY);
