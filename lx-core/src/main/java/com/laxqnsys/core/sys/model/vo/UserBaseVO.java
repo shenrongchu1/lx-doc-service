@@ -26,4 +26,7 @@ public class UserBaseVO {
     @Pattern(regexp = "^(?![\\da-z]+$)(?![\\dA-Z]+$)(?![\\d.!#$%^&*]+$)(?![a-zA-Z]+$)(?![a-z.!#$%^&*]+$)(?![A-Z.!#$%^&*]+$)[\\da-zA-z.!#$%^&*]{8,16}", message = "密码必须包含数字、大写字母、小写字母、特殊字符（!#$%^&*）其中3种")
     @ApiModelProperty(value = "密码")
     private String password;
+
+    @ApiModelProperty(value = "设备类型 1-手机 2-电脑")
+    private Integer equipmentType;
 }

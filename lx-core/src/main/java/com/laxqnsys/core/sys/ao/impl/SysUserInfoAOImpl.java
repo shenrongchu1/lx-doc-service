@@ -51,7 +51,7 @@ public class SysUserInfoAOImpl implements SysUserInfoAO {
     public void register(UserRegisterVO userRegisterVO) {
 
         long count = sysUserInfoService.count(Wrappers.<SysUserInfo>lambdaQuery()
-            .eq(SysUserInfo::getAccount, userRegisterVO.getAccount()));
+                .eq(SysUserInfo::getAccount, userRegisterVO.getAccount()));
         if (count > 0L) {
             throw new BusinessException(ErrorCodeEnum.ERROR.getCode(), String.format("名为%s的账户已存在，请设置其他的账户名！", userRegisterVO.getAccount()));
         }
@@ -62,7 +62,7 @@ public class SysUserInfoAOImpl implements SysUserInfoAO {
         }
         try {
             long c = sysUserInfoService.count(Wrappers.<SysUserInfo>lambdaQuery()
-                .eq(SysUserInfo::getAccount, userRegisterVO.getAccount()));
+                    .eq(SysUserInfo::getAccount, userRegisterVO.getAccount()));
             if (c > 0L) {
                 throw new BusinessException(ErrorCodeEnum.ERROR.getCode(), String.format("名为%s的账户已存在，请设置其他的账户名！", userRegisterVO.getAccount()));
             }
@@ -87,8 +87,8 @@ public class SysUserInfoAOImpl implements SysUserInfoAO {
         String password = userLoginVO.getPassword();
         String pwd = AESUtil.encrypt(password, CommonCons.AES_KEY);
         SysUserInfo userInfo = sysUserInfoService.getOne(Wrappers.<SysUserInfo>lambdaQuery()
-            .eq(SysUserInfo::getAccount, userLoginVO.getAccount())
-            .eq(SysUserInfo::getPassword, pwd));
+                .eq(SysUserInfo::getAccount, userLoginVO.getAccount())
+                .eq(SysUserInfo::getPassword, pwd));
         if (Objects.isNull(userInfo)) {
             throw new BusinessException(ErrorCodeEnum.ERROR.getCode(), "用户名或者密码错误！");
         }
@@ -96,7 +96,7 @@ public class SysUserInfoAOImpl implements SysUserInfoAO {
         this.userStatusCheck(userInfo);
 
         // 踢人
-        String key = this.downOldLogin(userInfo.getId());
+        String key = this.downOldLogin(userInfo.getId(), userLoginVO.getEquipmentType());
 
         String token = UUID.randomUUID().toString().replace("-", "");
         UserInfoBO userInfoBO = new UserInfoBO();
@@ -129,7 +129,7 @@ public class SysUserInfoAOImpl implements SysUserInfoAO {
         SysUserInfo userInfo = sysUserInfoService.getById(id);
         if (Objects.isNull(userInfo)) {
             throw new BusinessException(ErrorCodeEnum.ERROR.getCode(),
-                String.format("未获取到id为%s的登录人信息！", id));
+                    String.format("未获取到id为%s的登录人信息！", id));
         }
 
         this.userStatusCheck(userInfo);
@@ -149,7 +149,7 @@ public class SysUserInfoAOImpl implements SysUserInfoAO {
         SysUserInfo userInfo = sysUserInfoService.getById(userId);
         if (Objects.isNull(userInfo)) {
             throw new BusinessException(ErrorCodeEnum.ERROR.getCode(),
-                String.format("未获取到id为%s的登录人信息！", userId));
+                    String.format("未获取到id为%s的登录人信息！", userId));
         }
         this.userStatusCheck(userInfo);
         SysUserInfo update = new SysUserInfo();
@@ -165,7 +165,7 @@ public class SysUserInfoAOImpl implements SysUserInfoAO {
         SysUserInfo sysUserInfo = sysUserInfoService.getById(userId);
         if (Objects.isNull(sysUserInfo)) {
             throw new BusinessException(ErrorCodeEnum.ERROR.getCode(),
-                String.format("未获取到id为%s的登录人信息！", userId));
+                    String.format("未获取到id为%s的登录人信息！", userId));
         }
         String oldPassword = userPwdModifyVO.getOldPassword();
         String password = sysUserInfo.getPassword();
@@ -180,9 +180,9 @@ public class SysUserInfoAOImpl implements SysUserInfoAO {
         sysUserInfoService.updateById(update);
     }
 
-    private String downOldLogin(Long userId) {
+    private String downOldLogin(Long userId, Integer equipmentType) {
 
-        String key = CommonCons.LOGIN_USER_TOKE_KEY + userId;
+        String key = CommonCons.LOGIN_USER_TOKE_KEY + userId + equipmentType;
         String oldToken = userLoginManager.get(key);
         if (StringUtils.hasText(oldToken)) {
             // 踢掉其他的登录信息

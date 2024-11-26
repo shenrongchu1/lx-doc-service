@@ -67,6 +67,13 @@
       <artifactId>logback-classic</artifactId>
     </dependency>
 
+    <!-- SkyWalking Agent -->
+    <dependency>
+      <groupId>org.apache.skywalking</groupId>
+      <artifactId>apm-toolkit-logback-1.x</artifactId>
+      <version>8.12.0</version> <!-- 请根据实际版本调整 -->
+    </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
