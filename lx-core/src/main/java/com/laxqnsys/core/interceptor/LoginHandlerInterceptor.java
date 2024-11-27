@@ -48,7 +48,7 @@ public class LoginHandlerInterceptor implements HandlerInterceptor {
         if (match) {
             if (uri.contains("/api/login")) {
                 // 使用 CachedBodyHttpServletRequest 包装原始的 HttpServletRequest
-                CachedBodyHttpServletRequest cachedRequest = new CachedBodyHttpServletRequest(request);
+                HttpServletRequest cachedRequest = request;
 
                 // 判断设备类型
                 judgeEquipmentType(cachedRequest);
