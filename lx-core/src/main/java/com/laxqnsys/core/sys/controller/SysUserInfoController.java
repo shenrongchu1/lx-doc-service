@@ -40,8 +40,8 @@ public class SysUserInfoController {
     }
 
     @PostMapping("/login")
-    public ResponseResult<Void> login(@RequestBody @Validated UserLoginVO userLoginVO, HttpServletResponse response) {
-        sysUserInfoAO.login(userLoginVO, response);
+    public ResponseResult<Void> login(@RequestBody @Validated UserLoginVO userLoginVO, HttpServletRequest request, HttpServletResponse response) {
+        sysUserInfoAO.login(userLoginVO, request, response);
         return ResponseResult.ok();
     }
 

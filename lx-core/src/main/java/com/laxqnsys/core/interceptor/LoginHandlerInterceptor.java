@@ -32,8 +32,6 @@ public class LoginHandlerInterceptor implements HandlerInterceptor {
     private List<String> whiteUrlList = Lists.newArrayList();
     private AntPathMatcher antPathMatcher = new AntPathMatcher();
     private UserLoginManager userLoginManager;
-    private final String MOBILE_EQUIPMENT = "android|iphone|ipad|ipod|blackberry|iemobile|opera mini";
-    private final String PC = "Windows";
 
     public LoginHandlerInterceptor(UserLoginManager userLoginManager) {
         this.userLoginManager = userLoginManager;
@@ -46,16 +44,6 @@ public class LoginHandlerInterceptor implements HandlerInterceptor {
         String uri = request.getRequestURI();
         boolean match = whiteUrlList.stream().anyMatch(url -> antPathMatcher.match(url, uri));
         if (match) {
-            if (uri.contains("/api/login")) {
-                // 使用 CachedBodyHttpServletRequest 包装原始的 HttpServletRequest
-                HttpServletRequest cachedRequest = request;
-
-                // 判断设备类型
-                judgeEquipmentType(cachedRequest);
-
-                // 将包装后的请求传递给后续的处理器
-                request = cachedRequest;
-            }
             return true;
         }
         String token = WebUtil.getCookie(request, CommonCons.TOKEN_KEY);
@@ -73,42 +61,6 @@ public class LoginHandlerInterceptor implements HandlerInterceptor {
         String key = CommonCons.LOGIN_USER_TOKE_KEY + LoginContext.getUserId();
         userLoginManager.expire(key, CommonCons.LOGIN_TOKEN_EXPIRE_SECONDS);
         return true;
-    }
-
-    private void judgeEquipmentType(HttpServletRequest request) throws IOException {
-
-        String header = request.getHeader("user-agent");
-
-        if (StringUtils.isEmpty(header)) {
-            throw new BusinessException(ErrorCodeEnum.ILLEGAL_EQUIPMENT.getCode(), ErrorCodeEnum.ILLEGAL_EQUIPMENT.getDesc());
-        }
-
-        boolean isMobile = Pattern.compile(MOBILE_EQUIPMENT, Pattern.CASE_INSENSITIVE).matcher(header).find();
-        boolean isPC = Pattern.compile(PC, Pattern.CASE_INSENSITIVE).matcher(header).find();;
-
-        // 读取请求体
-        StringBuilder requestBody = new StringBuilder();
-        try (BufferedReader reader = request.getReader()) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                requestBody.append(line);
-            }
-        }
-
-        // 将请求体转换为 User 对象
-        ObjectMapper objectMapper = new ObjectMapper();
-        UserLoginVO user = objectMapper.readValue(requestBody.toString(), UserLoginVO.class);
-
-        if (isMobile) {
-            user.setEquipmentType(EquipmentTypeEnum.MOBLIE.getCode());
-        }else if (isPC) {
-            user.setEquipmentType(EquipmentTypeEnum.PC.getCode());
-        }else {
-            throw new BusinessException(ErrorCodeEnum.ILLEGAL_EQUIPMENT.getCode(), ErrorCodeEnum.ILLEGAL_EQUIPMENT.getDesc());
-        }
-
-        // 将User对象写入req
-        request.setAttribute("userLoginVO", user);
     }
 
     public void addWhiteUrl(String url) {

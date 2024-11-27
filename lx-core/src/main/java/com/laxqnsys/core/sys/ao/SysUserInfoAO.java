@@ -16,7 +16,7 @@ public interface SysUserInfoAO {
 
     void register(UserRegisterVO userRegisterVO);
 
-    void login(UserLoginVO userLoginVO, HttpServletResponse response);
+    void login(UserLoginVO userLoginVO, HttpServletRequest request, HttpServletResponse response);
 
     void logout(HttpServletRequest request, HttpServletResponse response);
 

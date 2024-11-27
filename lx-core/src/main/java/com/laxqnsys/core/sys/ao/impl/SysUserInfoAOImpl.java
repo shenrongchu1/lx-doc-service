@@ -2,12 +2,14 @@ package com.laxqnsys.core.sys.ao.impl;
 
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.laxqnsys.common.enums.ErrorCodeEnum;
 import com.laxqnsys.common.exception.BusinessException;
 import com.laxqnsys.common.util.AESUtil;
 import com.laxqnsys.core.constants.CommonCons;
 import com.laxqnsys.core.constants.RedissonLockPrefixCons;
 import com.laxqnsys.core.context.LoginContext;
+import com.laxqnsys.core.enums.EquipmentTypeEnum;
 import com.laxqnsys.core.enums.UserStatusEnum;
 import com.laxqnsys.core.manager.service.UserLoginManager;
 import com.laxqnsys.core.sys.ao.SysUserInfoAO;
@@ -20,11 +22,15 @@ import com.laxqnsys.core.sys.model.vo.UserPwdModifyVO;
 import com.laxqnsys.core.sys.model.vo.UserRegisterVO;
 import com.laxqnsys.core.sys.service.ISysUserInfoService;
 import com.laxqnsys.core.util.web.WebUtil;
+
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,7 +88,7 @@ public class SysUserInfoAOImpl implements SysUserInfoAO {
     }
 
     @Override
-    public void login(UserLoginVO userLoginVO, HttpServletResponse response) {
+    public void login(UserLoginVO userLoginVO, HttpServletRequest request, HttpServletResponse response) {
 
         String password = userLoginVO.getPassword();
         String pwd = AESUtil.encrypt(password, CommonCons.AES_KEY);
@@ -95,8 +101,11 @@ public class SysUserInfoAOImpl implements SysUserInfoAO {
 
         this.userStatusCheck(userInfo);
 
+        // 判断设备类型
+        Integer equipmentType = this.judgeEquipmentType(request);
+
         // 踢人
-        String key = this.downOldLogin(userInfo.getId(), userLoginVO.getEquipmentType());
+        String key = this.downOldLogin(userInfo.getId(), equipmentType);
 
         String token = UUID.randomUUID().toString().replace("-", "");
         UserInfoBO userInfoBO = new UserInfoBO();
@@ -199,6 +208,29 @@ public class SysUserInfoAOImpl implements SysUserInfoAO {
 
         if (UserStatusEnum.DELETE.getStatus().equals(userInfo.getStatus())) {
             throw new BusinessException(ErrorCodeEnum.ERROR.getCode(), "当前用户已注销！");
+        }
+    }
+
+    private Integer judgeEquipmentType(HttpServletRequest request) {
+        String MOBILE_EQUIPMENT = "android|iphone|ipad|ipod|blackberry|iemobile|opera mini";
+        String PC = "Windows";
+
+        String header = request.getHeader("user-agent");
+
+        if (StringUtils.isEmpty(header)) {
+            throw new BusinessException(ErrorCodeEnum.ILLEGAL_EQUIPMENT.getCode(), ErrorCodeEnum.ILLEGAL_EQUIPMENT.getDesc());
+        }
+
+        boolean isMobile = Pattern.compile(MOBILE_EQUIPMENT, Pattern.CASE_INSENSITIVE).matcher(header).find();
+
+        boolean isPC = Pattern.compile(PC, Pattern.CASE_INSENSITIVE).matcher(header).find();;
+
+        if (isMobile) {
+            return EquipmentTypeEnum.MOBLIE.getCode();
+        }else if (isPC) {
+            return EquipmentTypeEnum.PC.getCode();
+        }else {
+            throw new BusinessException(ErrorCodeEnum.ILLEGAL_EQUIPMENT.getCode(), ErrorCodeEnum.ILLEGAL_EQUIPMENT.getDesc());
         }
     }
 }
