@@ -46,15 +46,16 @@ public class LoginHandlerInterceptor implements HandlerInterceptor {
         String uri = request.getRequestURI();
         boolean match = whiteUrlList.stream().anyMatch(url -> antPathMatcher.match(url, uri));
         if (match) {
+            if (uri.contains("/api/login")) {
+                // 使用 CachedBodyHttpServletRequest 包装原始的 HttpServletRequest
+                CachedBodyHttpServletRequest cachedRequest = new CachedBodyHttpServletRequest(request);
 
-            // 使用 CachedBodyHttpServletRequest 包装原始的 HttpServletRequest
-            CachedBodyHttpServletRequest cachedRequest = new CachedBodyHttpServletRequest(request);
+                // 判断设备类型
+                judgeEquipmentType(cachedRequest);
 
-            // 判断设备类型
-            judgeEquipmentType(cachedRequest, handler, uri);
-
-            // 将包装后的请求传递给后续的处理器
-            request = cachedRequest;
+                // 将包装后的请求传递给后续的处理器
+                request = cachedRequest;
+            }
             return true;
         }
         String token = WebUtil.getCookie(request, CommonCons.TOKEN_KEY);
@@ -74,40 +75,40 @@ public class LoginHandlerInterceptor implements HandlerInterceptor {
         return true;
     }
 
-    private void judgeEquipmentType(HttpServletRequest request, Object handler, String uri) throws IOException {
-        if (uri.contains("/api/login")) {
-            String header = request.getHeader("user-agent");
-            if (StringUtils.isEmpty(handler)) {
-                throw new BusinessException(ErrorCodeEnum.ILLEGAL_EQUIPMENT.getCode(), ErrorCodeEnum.ILLEGAL_EQUIPMENT.getDesc());
-            }
+    private void judgeEquipmentType(HttpServletRequest request) throws IOException {
 
-            boolean isMobile = Pattern.compile(MOBILE_EQUIPMENT, Pattern.CASE_INSENSITIVE).matcher(header).find();
-            boolean isPC = Pattern.compile(PC, Pattern.CASE_INSENSITIVE).matcher(header).find();;
+        String header = request.getHeader("user-agent");
 
-            // 读取请求体
-            StringBuilder requestBody = new StringBuilder();
-            try (BufferedReader reader = request.getReader()) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    requestBody.append(line);
-                }
-            }
-
-            // 将请求体转换为 User 对象
-            ObjectMapper objectMapper = new ObjectMapper();
-            UserLoginVO user = objectMapper.readValue(requestBody.toString(), UserLoginVO.class);
-
-            if (isMobile) {
-                user.setEquipmentType(EquipmentTypeEnum.MOBLIE.getCode());
-            }else if (isPC) {
-                user.setEquipmentType(EquipmentTypeEnum.PC.getCode());
-            }else {
-                throw new BusinessException(ErrorCodeEnum.ILLEGAL_EQUIPMENT.getCode(), ErrorCodeEnum.ILLEGAL_EQUIPMENT.getDesc());
-            }
-
-            // 将User对象写入req
-            request.setAttribute("userLoginVO", user);
+        if (StringUtils.isEmpty(header)) {
+            throw new BusinessException(ErrorCodeEnum.ILLEGAL_EQUIPMENT.getCode(), ErrorCodeEnum.ILLEGAL_EQUIPMENT.getDesc());
         }
+
+        boolean isMobile = Pattern.compile(MOBILE_EQUIPMENT, Pattern.CASE_INSENSITIVE).matcher(header).find();
+        boolean isPC = Pattern.compile(PC, Pattern.CASE_INSENSITIVE).matcher(header).find();;
+
+        // 读取请求体
+        StringBuilder requestBody = new StringBuilder();
+        try (BufferedReader reader = request.getReader()) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                requestBody.append(line);
+            }
+        }
+
+        // 将请求体转换为 User 对象
+        ObjectMapper objectMapper = new ObjectMapper();
+        UserLoginVO user = objectMapper.readValue(requestBody.toString(), UserLoginVO.class);
+
+        if (isMobile) {
+            user.setEquipmentType(EquipmentTypeEnum.MOBLIE.getCode());
+        }else if (isPC) {
+            user.setEquipmentType(EquipmentTypeEnum.PC.getCode());
+        }else {
+            throw new BusinessException(ErrorCodeEnum.ILLEGAL_EQUIPMENT.getCode(), ErrorCodeEnum.ILLEGAL_EQUIPMENT.getDesc());
+        }
+
+        // 将User对象写入req
+        request.setAttribute("userLoginVO", user);
     }
 
     public void addWhiteUrl(String url) {
